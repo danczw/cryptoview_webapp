@@ -1,6 +1,7 @@
 <template>
-  <div class="hello">
+  <div id="body">
     <div id="treemap"></div>
+    <div id="tooltip"></div>
   </div>
 </template>
 
@@ -43,6 +44,13 @@ export default {
       }).then(generateTree).catch((err) => {
         console.log('API call error:', err.message);
       });
+
+      // Create number formatter
+      var formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0, // (causes 2500.99 to be printed as $2,501)
+      });
       
       function generateTree() {
         let data = {"name": "crypto", "children": []}
@@ -57,7 +65,7 @@ export default {
         }
         
         const w = window.innerWidth;
-        const h = window.innerHeight;
+        const h = window.innerHeight - 50;
 
         const hierarchy = d3.hierarchy(data)
           .sum(d=>d.market_cap)
@@ -73,7 +81,10 @@ export default {
           .append("svg")
           .attr("viewBox", [0, 0, w, h])
         
-        // const svg = d3.select("svg"); //make sure there's a svg element in your html file.
+        // d3.select('#body')
+        //   .append('div')
+        //   .attr('id', 'tooltip')
+        //   .attr('style', 'position: absolute; opacity: 0;');
 
         svg.selectAll("rect")
           .data(root.leaves())
@@ -83,7 +94,29 @@ export default {
           .attr("y", d=>d.y0)
           .attr("width",  d=>d.x1 - d.x0)
           .attr("height", d=>d.y1 - d.y0)
-          .attr("fill", "#264653")
+          .attr("fill", "#2a9d8f")
+          .on("mouseover", function(d) {
+            d3.select(this)
+              .transition()
+              .duration(200)
+              .attr("opacity", 0.8);
+            d3.select('#tooltip')
+              .transition()
+              .duration(200)
+              .style('opacity', 1)
+              .text(`${d.originalTarget.__data__.data.name} - Market Cap: ${formatter.format(d.originalTarget.__data__.data.market_cap)}`)
+          }).on("mouseout", function() {
+              d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("opacity", 1);
+              d3.select('#tooltip')
+                .style('opacity', 0)
+          }).on('mousemove', function() {
+            d3.select('#tooltip')
+              .style('left', (event.x + 10) + 'px')
+              .style('top', (event.y + 10) + 'px')
+          })
 
         svg.selectAll('text')
           .data(root.leaves())
@@ -91,7 +124,7 @@ export default {
           .append('text')
           .selectAll('tspan')
           .data(d => {
-            return d.data.name.split(/(?=[A-Z][^A-Z])/g) // split the name of movie
+            return d.data.symbol.split(/(?=[A-Z][^A-Z])/g) // split the symbol
               .map(v => {
                 return {
                   text: v,
@@ -115,5 +148,15 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-
+#tooltip {
+  position: absolute;
+  text-align: center;
+  padding: .5rem;
+  background: #FFFFFF;
+  color: #313639;
+  border: 1px solid #8c00ff;
+  border-radius: 8px;
+  pointer-events: none;
+  font-size: 0.9rem;
+}
 </style>
