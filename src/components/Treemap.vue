@@ -1,5 +1,6 @@
 <template>
   <div id="body">
+    <div class="lds-hourglass" v-if="loading"></div>
     <div id="treemap"></div>
     <div id="tooltip"></div>
   </div>
@@ -8,6 +9,7 @@
 <script>
 import * as d3 from "d3";
 import { useStore } from "vuex";
+import axios from "axios"
 
 // TODO: remove when API is implemented
 import datajson from "../assets/data.json";
@@ -19,13 +21,17 @@ export default {
     const store = useStore();
     return { store }
   },
-
+  data: () => ({
+    loading: false
+  }),
   mounted() {
     this.treemap();
   },
 
   methods: {
-    treemap() {      
+    treemap() {
+      this.loading = true;
+      let vm = this;
       // create number formatter
       // TODO: add second formatter for decimal
       const formatter = new Intl.NumberFormat("en-US", {
@@ -36,10 +42,11 @@ export default {
 
       async function viz(_store) {
         try {
-          let apiResult = await apiRequest(_store);
-          _store.commit("setMetaData", metadatajson);
-          console.log(apiResult)
-
+          let quotesResult = await quotesApi(_store);
+          console.log("Why is this " + quotesResult) // TODO: ??
+          let metaResult = await metaApi(_store);
+          console.log("Why is this " + metaResult) // TODO: ??
+          
           let transfResult = await transfData(_store);
           console.log(transfResult);
 
@@ -49,44 +56,38 @@ export default {
         } catch (error) {
           console.log(error);
         }
+        vm.loading = false;
       }
       viz(this.store);
       
-      function apiRequest(_store) {
-        // TODO: refactor to vuex
-        // TODO: build REST API
-        return new Promise((resolve) => {
-          const cmc_key = process.env.VUE_APP_COIN;
-          const rp = require("request-promise");
-          const requestOptions = {
-            method: "GET",
-            uri: "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest",
-            qs: {
-              "start": "1",
-              "limit": "50",
-              "convert": "USD"
-            },
-            headers: {
-              "X-CMC_PRO_API_KEY": cmc_key,
-            },
-            json: true,
-            gzip: true
-          };
-          rp(requestOptions).then(response => {
-            _store.commit("setQuoteData", response);
-            resolve("data fetched from coinmarketcap");
-          }).catch((err) => {
-            _store.commit("setQuoteData", datajson);
-            _store.commit("setMetaData", metadatajson);
-            console.log(err.message);
-          });
-        })
+      async function quotesApi(_store) {
+        const apiUrl = "http://localhost:3000/quotes/";
+        try {
+          let response = await axios(`${ apiUrl }`);
+          _store.commit("setQuoteData", response);
+        } catch (error) {
+          _store.commit("setQuoteData", datajson);
+          console.log(error);
+        }
+      }
+
+      async function metaApi(_store) {
+        const apiUrl = "http://localhost:3000/meta/";
+        try {
+          let response = await axios(`${ apiUrl }`);
+          _store.commit("setMetaData", response);
+        } catch (error) {
+          _store.commit("setMetaData", metadatajson);
+          console.log(error);
+        }
       }
       
       function transfData(_store) {
         _store.commit("resetTransfData")
         return new Promise((resolve) => {
+          _store.commit("resetMarketCapShown");
           for (let crypto = 0; crypto < _store.state.quoteData.data.length; crypto++) {
+            _store.commit("addMarketCapShown", _store.state.quoteData.data[crypto].quote.USD.market_cap);
             let newData = {
               "id": _store.state.quoteData.data[crypto].id,
               "name": _store.state.quoteData.data[crypto].name,
@@ -94,6 +95,7 @@ export default {
               "price": _store.state.quoteData.data[crypto].quote.USD.price,
               "slug": _store.state.quoteData.data[crypto].slug,
               "market_cap": _store.state.quoteData.data[crypto].quote.USD.market_cap
+              // "market_cap_perc": _store.state.metaData.data.quote.USD.total_market_cap / _store.state.quoteData.data[crypto].quote.USD.market_cap
             }
             _store.commit("addTransfData", newData)
           }
@@ -186,15 +188,12 @@ export default {
                 .style("top", (event.y + 10) + "px")
             })
 
-          // console.log(root.leaves()[0].data.symbol)
-
           svg.selectAll("text")
             .data(root.leaves())
             .enter()
             .append("text")
             .selectAll("tspan")
             .data(d => {
-              console.log(d.data.symbol)
               return d.data.symbol.split(/(?=[A-Z][^A-Z])/g) // split the symbol
                 .map(v => {
                   return {
@@ -232,4 +231,36 @@ export default {
   pointer-events: none;
   font-size: 0.9rem;
 }
+.lds-hourglass {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-hourglass:after {
+  content: " ";
+  display: block;
+  border-radius: 50%;
+  width: 0;
+  height: 0;
+  margin: 8px;
+  box-sizing: border-box;
+  border: 32px solid rgba(111, 0, 255, 0.89);
+  border-color: rgba(111, 0, 255, 0.89) transparent rgba(111, 0, 255, 0.89) transparent;
+  animation: lds-hourglass 1.2s infinite;
+}
+@keyframes lds-hourglass {
+  0% {
+    transform: rotate(0);
+    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  }
+  50% {
+    transform: rotate(900deg);
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+  100% {
+    transform: rotate(1800deg);
+  }
+}
+
 </style>
