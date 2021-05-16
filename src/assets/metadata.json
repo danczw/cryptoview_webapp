@@ -1,0 +1,30 @@
+{
+    "data": {
+        "btc_dominance": 67.0057,
+        "eth_dominance": 9.02205,
+        "active_cryptocurrencies": 2941,
+        "total_cryptocurrencies": 4637,
+        "active_market_pairs": 21209,
+        "active_exchanges": 445,
+        "total_exchanges": 677,
+        "last_updated": "2019-05-16T18:47:00.000Z",
+        "quote": {
+            "USD": {
+                "total_market_cap": 250385096532.124,
+                "total_volume_24h": 119270642406.968,
+                "total_volume_24h_reported": 1514905418.39087,
+                "altcoin_volume_24h": 119270642406.968,
+                "altcoin_volume_24h_reported": 1514905418.39087,
+                "altcoin_market_cap": 250385096532.124,
+                "last_updated": "2019-05-16T18:47:00.000Z"
+            }
+        }
+    },
+    "status": {
+        "timestamp": "2021-05-15T07:54:21.279Z",
+        "error_code": 0,
+        "error_message": "",
+        "elapsed": 10,
+        "credit_count": 1
+    }
+}
