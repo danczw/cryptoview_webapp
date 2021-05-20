@@ -6,13 +6,12 @@
   <router-view/>
 </template>
 
-<style>
+<style lang = "scss">
+@import "./src/styles/variables.scss";
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
 }
 
 #nav {
@@ -21,10 +20,10 @@
 
 #nav a {
   font-weight: bold;
-  color: #2c3e50;
+  color: $black-shadows;
 }
 
 #nav a.router-link-exact-active {
-  color: #42b983;
+  color: $spanish-orange;
 }
 </style>
