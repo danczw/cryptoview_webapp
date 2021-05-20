@@ -13,7 +13,7 @@ app.get('/quotes/', (request, response) => {
         uri: "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest",
         qs: {
             "start": "1",
-            "limit": "3",
+            "limit": "15",
             "convert": "USD"
         },
         headers: {

@@ -106,7 +106,7 @@ export default {
               "price": _store.state.quoteData.data[crypto].quote.USD.price,
               "slug": _store.state.quoteData.data[crypto].slug,
               "market_cap": _store.state.quoteData.data[crypto].quote.USD.market_cap,
-              "market_cap_perc": Math.round(_store.state.quoteData.data[crypto].quote.USD.market_cap / _store.state.metaData.data.quote.USD.total_market_cap * 100) / 100
+              "market_cap_perc": _store.state.quoteData.data[crypto].quote.USD.market_cap / _store.state.metaData.data.quote.USD.total_market_cap * 100
             }
             _store.commit("addTransfData", newData)
           }
@@ -117,7 +117,7 @@ export default {
             "price": NaN,
             "slug": "other",
             "market_cap": _store.state.metaData.data.quote.USD.total_market_cap,
-            "market_cap_perc": Math.round((_store.state.marketCapShown - _store.state.metaData.data.quote.USD.total_market_cap) / _store.state.metaData.data.quote.USD.total_market_cap * 100) / 100
+            "market_cap_perc": (_store.state.metaData.data.quote.USD.total_market_cap - _store.state.marketCapShown) / _store.state.metaData.data.quote.USD.total_market_cap * 100
           }
           _store.commit("addTransfData", otherData)
           resolve("data transformed")
@@ -190,7 +190,7 @@ export default {
                         Market Cap:
                       </td>
                       <td>
-                          ${d.originalTarget.__data__.data.market_cap_perc}%
+                          ${d.originalTarget.__data__.data.market_cap_perc.toFixed(2)}%
                       </td>
                     </tr>
                   </table>`
