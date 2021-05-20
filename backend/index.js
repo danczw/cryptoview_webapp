@@ -23,6 +23,7 @@ app.get('/quotes/', (request, response) => {
         gzip: true
     };
     rp(requestOptions).then(res => {
+        // console.log(res);
         response.send(res.data);
     }).catch((err) => {
         console.log(err.message);

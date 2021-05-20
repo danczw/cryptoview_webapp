@@ -1,7 +1,11 @@
 <template>
   <div id="body">
-    <div class="lds-hourglass" v-if="loading"></div>
-    <div id="treemap"></div>
+    <div class="lds-wrapper">
+      <div class="lds-hourglass" v-if="loading"></div>
+    </div>
+    <div class="svg-wrapper">
+      <div id="treemap"></div>
+    </div>
     <div id="tooltip"></div>
   </div>
 </template>
@@ -38,6 +42,12 @@ export default {
         style: "currency",
         currency: "USD",
         maximumFractionDigits: 0
+      });
+
+      const formatter_dec = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 2
       });
 
       async function viz(_store) {
@@ -86,6 +96,7 @@ export default {
         _store.commit("resetTransfData")
         return new Promise((resolve) => {
           _store.commit("resetMarketCapShown");
+          // TODO: write getters
           for (let crypto = 0; crypto < _store.state.quoteData.data.length; crypto++) {
             _store.commit("addMarketCapShown", _store.state.quoteData.data[crypto].quote.USD.market_cap);
             let newData = {
@@ -94,8 +105,8 @@ export default {
               "symbol": _store.state.quoteData.data[crypto].symbol,
               "price": _store.state.quoteData.data[crypto].quote.USD.price,
               "slug": _store.state.quoteData.data[crypto].slug,
-              "market_cap": _store.state.quoteData.data[crypto].quote.USD.market_cap
-              // "market_cap_perc": _store.state.metaData.data.quote.USD.total_market_cap / _store.state.quoteData.data[crypto].quote.USD.market_cap
+              "market_cap": _store.state.quoteData.data[crypto].quote.USD.market_cap,
+              "market_cap_perc": Math.round(_store.state.quoteData.data[crypto].quote.USD.market_cap / _store.state.metaData.data.quote.USD.total_market_cap * 100) / 100
             }
             _store.commit("addTransfData", newData)
           }
@@ -105,7 +116,8 @@ export default {
             "symbol": "Other",
             "price": NaN,
             "slug": "other",
-            "market_cap": _store.state.metaData.data.quote.USD.total_market_cap
+            "market_cap": _store.state.metaData.data.quote.USD.total_market_cap,
+            "market_cap_perc": Math.round((_store.state.marketCapShown - _store.state.metaData.data.quote.USD.total_market_cap) / _store.state.metaData.data.quote.USD.total_market_cap * 100) / 100
           }
           _store.commit("addTransfData", otherData)
           resolve("data transformed")
@@ -139,12 +151,12 @@ export default {
             .attr("y", d=>d.y0)
             .attr("width",  d=>d.x1 - d.x0)
             .attr("height", d=>d.y1 - d.y0)
-            .attr("fill", "#2a9d8f")
+            .attr("fill", "#53b3cbff")
             .on("mouseover", function(d) {
               d3.select(this)
                 .transition()
                 .duration(200)
-                .attr("opacity", 0.8);
+                .attr("opacity", 0.6);
               d3.select("#tooltip")
                 .transition()
                 .duration(200)
@@ -162,7 +174,7 @@ export default {
                         Quote:
                       </td>
                       <td>
-                        ${formatter.format(d.originalTarget.__data__.data.price)}
+                        ${formatter_dec.format(d.originalTarget.__data__.data.price)}
                       </td>
                     </tr>
                     <tr>
@@ -171,6 +183,14 @@ export default {
                       </td>
                       <td>
                           ${formatter.format(d.originalTarget.__data__.data.market_cap)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        Market Cap:
+                      </td>
+                      <td>
+                          ${d.originalTarget.__data__.data.market_cap_perc}%
                       </td>
                     </tr>
                   </table>`
@@ -208,7 +228,7 @@ export default {
             .attr("x", (d) => d.x0 + 5)
             .attr("y", (d, i) => d.y0 + 15 + (i * 10))       // offset by index 
             .text((d) => d.text)
-            .attr("font-size", "0.8em")
+            .attr("font-size", "0.9em")
             .attr("fill", "white");
           resolve("tree map build")
         })
@@ -219,18 +239,32 @@ export default {
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style scoped lang="scss">
+@import "./src/styles/variables.scss";
+
 #tooltip {
   position: absolute;
   text-align: left;
   padding: .5rem;
   background: #FFFFFF;
-  color: #313639;
-  border: 1px solid #3b4e79;
+  color: $rich-black-fogra-29;
+  border: 1px solid $yale-blue;
+  opacity: 0;
   border-radius: 2px;
   pointer-events: none;
   font-size: 0.9rem;
 }
+
+.lds-wrapper {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transform: -webkit-translate(-50%, -50%);
+  transform: -moz-translate(-50%, -50%);
+  transform: -ms-translate(-50%, -50%);
+}
+
 .lds-hourglass {
   display: inline-block;
   position: relative;
@@ -245,8 +279,8 @@ export default {
   height: 0;
   margin: 8px;
   box-sizing: border-box;
-  border: 32px solid rgba(111, 0, 255, 0.89);
-  border-color: rgba(111, 0, 255, 0.89) transparent rgba(111, 0, 255, 0.89) transparent;
+  border: 32px solid $antique-ruby;
+  border-color: $antique-ruby transparent $antique-ruby transparent;
   animation: lds-hourglass 1.2s infinite;
 }
 @keyframes lds-hourglass {
@@ -261,6 +295,10 @@ export default {
   100% {
     transform: rotate(1800deg);
   }
+}
+
+.svg-wrapper {
+  padding: 10px;
 }
 
 </style>
