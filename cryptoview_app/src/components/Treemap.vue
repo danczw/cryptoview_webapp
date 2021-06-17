@@ -31,13 +31,15 @@ export default {
   mounted() {
     this.treemap();
   },
+  unmounted() {
+    this.unmountTreemap();
+  },
 
   methods: {
     treemap() {
-      this.loading = true;
-      let vm = this;
+      var vm = this;
+      vm.loading = true;
       // create number formatter
-      // TODO: add second formatter for decimal
       const formatter = new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
@@ -50,17 +52,17 @@ export default {
         maximumFractionDigits: 2
       });
 
-      async function viz(_store) {
+      async function viz() {
         try {
-          let quotesResult = await quotesApi(_store);
+          let quotesResult = await quotesApi();
           console.log("Why is this " + quotesResult) // TODO: ??
-          let metaResult = await metaApi(_store);
+          let metaResult = await metaApi();
           console.log("Why is this " + metaResult) // TODO: ??
           
-          let transfResult = await transfData(_store);
+          let transfResult = await transfData();
           console.log(transfResult);
 
-          let generateResult = await generateTree(_store);
+          let generateResult = await generateTree();
           console.log(generateResult);
 
         } catch (error) {
@@ -68,47 +70,47 @@ export default {
         }
         vm.loading = false;
       }
-      viz(this.store);
+      viz();
       
-      async function quotesApi(_store) {
+      async function quotesApi() {
         const apiUrl = "https://cryptoview.azurewebsites.net/quotes/";
         try {
           let response = await axios(`${ apiUrl }`);
-          _store.commit("setQuoteData", response);
+          vm.store.commit("setQuoteData", response);
         } catch (error) {
-          _store.commit("setQuoteData", datajson);
+          vm.store.commit("setQuoteData", datajson);
           console.log(error);
         }
       }
 
-      async function metaApi(_store) {
+      async function metaApi() {
         const apiUrl = "https://cryptoview.azurewebsites.net/meta/";
         try {
           let response = await axios(`${ apiUrl }`);
-          _store.commit("setMetaData", response);
+          vm.store.commit("setMetaData", response);
         } catch (error) {
-          _store.commit("setMetaData", metadatajson);
+          vm.store.commit("setMetaData", metadatajson);
           console.log(error);
         }
       }
       
-      function transfData(_store) {
-        _store.commit("resetTransfData")
+      function transfData() {
+        vm.store.commit("resetTransfData")
         return new Promise((resolve) => {
-          _store.commit("resetMarketCapShown");
+          vm.store.commit("resetMarketCapShown");
           // TODO: write getters
-          for (let crypto = 0; crypto < _store.state.quoteData.data.length; crypto++) {
-            _store.commit("addMarketCapShown", _store.state.quoteData.data[crypto].quote.USD.market_cap);
+          for (let crypto = 0; crypto < vm.store.state.quoteData.data.length; crypto++) {
+            vm.store.commit("addMarketCapShown", vm.store.state.quoteData.data[crypto].quote.USD.market_cap);
             let newData = {
-              "id": _store.state.quoteData.data[crypto].id,
-              "name": _store.state.quoteData.data[crypto].name,
-              "symbol": _store.state.quoteData.data[crypto].symbol,
-              "price": _store.state.quoteData.data[crypto].quote.USD.price,
-              "slug": _store.state.quoteData.data[crypto].slug,
-              "market_cap": _store.state.quoteData.data[crypto].quote.USD.market_cap,
-              "market_cap_perc": _store.state.quoteData.data[crypto].quote.USD.market_cap / _store.state.metaData.data.quote.USD.total_market_cap * 100
+              "id": vm.store.state.quoteData.data[crypto].id,
+              "name": vm.store.state.quoteData.data[crypto].name,
+              "symbol": vm.store.state.quoteData.data[crypto].symbol,
+              "price": vm.store.state.quoteData.data[crypto].quote.USD.price,
+              "slug": vm.store.state.quoteData.data[crypto].slug,
+              "market_cap": vm.store.state.quoteData.data[crypto].quote.USD.market_cap,
+              "market_cap_perc": vm.store.state.quoteData.data[crypto].quote.USD.market_cap / vm.store.state.metaData.data.quote.USD.total_market_cap * 100
             }
-            _store.commit("addTransfData", newData)
+            vm.store.commit("addTransfData", newData)
           }
           let otherData = {
             "id": 0,
@@ -116,20 +118,20 @@ export default {
             "symbol": "Other",
             "price": NaN,
             "slug": "other",
-            "market_cap": _store.state.metaData.data.quote.USD.total_market_cap,
-            "market_cap_perc": (_store.state.metaData.data.quote.USD.total_market_cap - _store.state.marketCapShown) / _store.state.metaData.data.quote.USD.total_market_cap * 100
+            "market_cap": vm.store.state.metaData.data.quote.USD.total_market_cap,
+            "market_cap_perc": (vm.store.state.metaData.data.quote.USD.total_market_cap - vm.store.state.marketCapShown) / vm.store.state.metaData.data.quote.USD.total_market_cap * 100
           }
-          _store.commit("addTransfData", otherData)
+          vm.store.commit("addTransfData", otherData)
           resolve("data transformed")
         })
       }
 
-      function generateTree(_store) {
+      function generateTree() {
         return new Promise((resolve) => {
           const w = window.innerWidth;
           const h = window.innerHeight - 50;
 
-          const hierarchy = d3.hierarchy(_store.state.transfData)
+          const hierarchy = d3.hierarchy(vm.store.state.transfData)
             .sum(d => d.market_cap)
             .sort((a, b) => b.market_cap - a.market_cap);
 
@@ -233,6 +235,11 @@ export default {
           resolve("tree map build")
         })
       }
+    },
+
+    unmountTreemap() {
+      const svg = d3.select("#treemap")
+      svg.selectAll('*').remove();
     }
   }
 }
