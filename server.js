@@ -1,8 +1,15 @@
 require("dotenv").config();
 const rp = require("request-promise");
+const path = require("path");
 const express = require('express');
 const app = express();
-const port = 3000;
+const port = 8080;
+
+app.use(express.static(path.join(__dirname, "cryptoview_app/dist")))
+
+app.get('/', (request, response) => {
+    response.sendFile(path.join(__dirname, 'cryptoview_app/dist/index.html'));
+  });
 
 app.get('/quotes/', (request, response) => {
     console.log(request.query)

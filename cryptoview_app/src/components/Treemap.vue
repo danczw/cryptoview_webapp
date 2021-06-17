@@ -71,7 +71,7 @@ export default {
       viz(this.store);
       
       async function quotesApi(_store) {
-        const apiUrl = "http://localhost:3000/quotes/";
+        const apiUrl = "http://localhost:8080/quotes/";
         try {
           let response = await axios(`${ apiUrl }`);
           _store.commit("setQuoteData", response);
@@ -82,7 +82,7 @@ export default {
       }
 
       async function metaApi(_store) {
-        const apiUrl = "http://localhost:3000/meta/";
+        const apiUrl = "http://localhost:8080/meta/";
         try {
           let response = await axios(`${ apiUrl }`);
           _store.commit("setMetaData", response);
