@@ -31,7 +31,7 @@ export default {
   mounted() {
     this.treemap();
   },
-  unmounted() {
+  beforeUnmount() {
     this.unmountTreemap();
   },
 
@@ -39,6 +39,7 @@ export default {
     treemap() {
       var vm = this;
       vm.loading = true;
+
       // create number formatter
       const formatter = new Intl.NumberFormat("en-US", {
         style: "currency",
@@ -54,16 +55,11 @@ export default {
 
       async function viz() {
         try {
-          let quotesResult = await quotesApi();
-          console.log("Why is this " + quotesResult) // TODO: ??
-          let metaResult = await metaApi();
-          console.log("Why is this " + metaResult) // TODO: ??
+          await quotesApi();
+          await metaApi();
           
-          let transfResult = await transfData();
-          console.log(transfResult);
-
-          let generateResult = await generateTree();
-          console.log(generateResult);
+          await transfData();
+          await generateTree();
 
         } catch (error) {
           console.log(error);
@@ -73,10 +69,11 @@ export default {
       viz();
       
       async function quotesApi() {
-        const apiUrl = "https://cryptoview.azurewebsites.net/quotes/";
+        const apiUrl = "http://localhost:3000/quotes/";
         try {
           let response = await axios(`${ apiUrl }`);
           vm.store.commit("setQuoteData", response);
+          return response
         } catch (error) {
           vm.store.commit("setQuoteData", datajson);
           console.log(error);
@@ -84,10 +81,11 @@ export default {
       }
 
       async function metaApi() {
-        const apiUrl = "https://cryptoview.azurewebsites.net/meta/";
+        const apiUrl = "http://localhost:3000/meta/";
         try {
           let response = await axios(`${ apiUrl }`);
           vm.store.commit("setMetaData", response);
+          return response
         } catch (error) {
           vm.store.commit("setMetaData", metadatajson);
           console.log(error);
@@ -98,7 +96,7 @@ export default {
         vm.store.commit("resetTransfData")
         return new Promise((resolve) => {
           vm.store.commit("resetMarketCapShown");
-          // TODO: write getters
+          // TODO: move to backend
           for (let crypto = 0; crypto < vm.store.state.quoteData.data.length; crypto++) {
             vm.store.commit("addMarketCapShown", vm.store.state.quoteData.data[crypto].quote.USD.market_cap);
             let newData = {
@@ -118,7 +116,7 @@ export default {
             "symbol": "Other",
             "price": NaN,
             "slug": "other",
-            "market_cap": vm.store.state.metaData.data.quote.USD.total_market_cap,
+            "market_cap": vm.store.state.metaData.data.quote.USD.total_market_cap - vm.store.state.marketCapShown,
             "market_cap_perc": (vm.store.state.metaData.data.quote.USD.total_market_cap - vm.store.state.marketCapShown) / vm.store.state.metaData.data.quote.USD.total_market_cap * 100
           }
           vm.store.commit("addTransfData", otherData)
@@ -168,7 +166,7 @@ export default {
                   <table>
                     <tr>
                       <th>
-                        ${d.originalTarget.__data__.data.name}</br>
+                        ${d.target.__data__.data.name}</br>
                       </th>
                     </tr>
                     <tr>
@@ -176,7 +174,7 @@ export default {
                         Quote:
                       </td>
                       <td>
-                        ${formatter_dec.format(d.originalTarget.__data__.data.price)}
+                        ${formatter_dec.format(d.target.__data__.data.price)}
                       </td>
                     </tr>
                     <tr>
@@ -184,7 +182,7 @@ export default {
                         Market Cap:
                       </td>
                       <td>
-                          ${formatter.format(d.originalTarget.__data__.data.market_cap)}
+                        ${formatter.format(d.target.__data__.data.market_cap)}
                       </td>
                     </tr>
                     <tr>
@@ -192,7 +190,7 @@ export default {
                         Market Cap:
                       </td>
                       <td>
-                          ${d.originalTarget.__data__.data.market_cap_perc.toFixed(2)}%
+                        ${d.target.__data__.data.market_cap_perc.toFixed(2)}%
                       </td>
                     </tr>
                   </table>`
