@@ -3,7 +3,7 @@ const rp = require("request-promise");
 const path = require("path");
 const express = require('express');
 const app = express();
-const port = 8080;
+const port = 3000;
 
 app.use(express.static(path.join(__dirname, "cryptoview_app/dist")))
 
@@ -12,8 +12,8 @@ app.get('/', (request, response) => {
   });
 
 app.get('/quotes/', (request, response) => {
-    console.log(request.query)
-    response.set("Access-Control-Allow-Origin", "*")
+    console.log(request.query);
+    response.set("Access-Control-Allow-Origin", "*");
     const cmc_key = process.env.CMC_KEY;
     const requestOptions = {
         method: "GET",
@@ -54,6 +54,7 @@ app.get('/meta/', (request, response) => {
         gzip: true
     };
     rp(requestOptions).then(res => {
+        // console.log(res);
         response.send(res.data);
     }).catch((err) => {
         console.log(err.message);
@@ -61,5 +62,5 @@ app.get('/meta/', (request, response) => {
 })
 
 app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`)
+    console.log(`Server listening at http://localhost:${port}`)
 })
