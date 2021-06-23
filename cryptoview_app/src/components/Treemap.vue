@@ -69,7 +69,7 @@ export default {
       viz();
       
       async function quotesApi() {
-        const apiUrl = "http://localhost:3000/quotes/";
+        const apiUrl = "https://cryptoview.azurewebsites.net/quotes";
         try {
           let response = await axios(`${ apiUrl }`);
           vm.store.commit("setQuoteData", response);
@@ -81,7 +81,7 @@ export default {
       }
 
       async function metaApi() {
-        const apiUrl = "http://localhost:3000/meta/";
+        const apiUrl = "https://cryptoview.azurewebsites.net/meta";
         try {
           let response = await axios(`${ apiUrl }`);
           vm.store.commit("setMetaData", response);
