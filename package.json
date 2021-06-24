@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "cryptoview_app",
   "version": "1.0.0",
   "description": "coinmarketcap API call",
   "main": "index.js",
