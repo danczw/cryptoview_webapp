@@ -2,29 +2,18 @@ import { createStore } from 'vuex'
 
 export default createStore({
   state: {
-    quoteData: {},
-    metaData: {},
-    transfData: {"name": "crypto", "children": []},
-    marketCapShown: 0
+    quoteData: {"name": "crypto", "children": []},
+    metaData: {}
   },
   mutations: {
     setQuoteData(state, _newData) {
-      state.quoteData = _newData;
+      state.quoteData.children.push(_newData);
+    },
+    resetQuoteData(state) {
+      state.quoteData = {"name": "crypto", "children": []};
     },
     setMetaData(state, _newData) {
       state.metaData = _newData;
-    },
-    addTransfData(state, _newData) {
-      state.transfData.children.push(_newData);
-    },
-    resetTransfData(state) {
-      state.transfData = {"name": "crypto", "children": []};
-    },
-    addMarketCapShown(state, _newData) {
-      state.marketCapShown += _newData;
-    },
-    resetMarketCapShown(state) {
-      state.marketCapShown = 0;
     }
   },
   actions: {

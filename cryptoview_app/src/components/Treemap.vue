@@ -17,7 +17,6 @@ import axios from "axios"
 
 // TODO: remove when API is implemented
 import datajson from "../assets/data.json";
-import metadatajson from "../assets/metadata.json"; 
 
 export default {
   name: "Treemap",
@@ -55,10 +54,9 @@ export default {
 
       async function viz() {
         try {
+          vm.store.commit("resetQuoteData");
+
           await quotesApi();
-          await metaApi();
-          
-          await transfData();
           await generateTree();
 
         } catch (error) {
@@ -70,9 +68,15 @@ export default {
       
       async function quotesApi() {
         const apiUrl = "https://cryptoview.azurewebsites.net/quotes";
+        
         try {
           let response = await axios(`${ apiUrl }`);
-          vm.store.commit("setQuoteData", response);
+
+          for (var crypto = 0; crypto < response.data.quotes[0].length; crypto++) {
+            vm.store.commit("setQuoteData", response.data.quotes[0][crypto]);
+          }
+          vm.store.commit("setMetaData", response.data.meta);
+
           return response
         } catch (error) {
           vm.store.commit("setQuoteData", datajson);
@@ -80,56 +84,15 @@ export default {
         }
       }
 
-      async function metaApi() {
-        const apiUrl = "https://cryptoview.azurewebsites.net/meta";
-        try {
-          let response = await axios(`${ apiUrl }`);
-          vm.store.commit("setMetaData", response);
-          return response
-        } catch (error) {
-          vm.store.commit("setMetaData", metadatajson);
-          console.log(error);
-        }
-      }
-      
-      function transfData() {
-        vm.store.commit("resetTransfData")
-        return new Promise((resolve) => {
-          vm.store.commit("resetMarketCapShown");
-          // TODO: move to backend
-          for (let crypto = 0; crypto < vm.store.state.quoteData.data.length; crypto++) {
-            vm.store.commit("addMarketCapShown", vm.store.state.quoteData.data[crypto].quote.USD.market_cap);
-            let newData = {
-              "id": vm.store.state.quoteData.data[crypto].id,
-              "name": vm.store.state.quoteData.data[crypto].name,
-              "symbol": vm.store.state.quoteData.data[crypto].symbol,
-              "price": vm.store.state.quoteData.data[crypto].quote.USD.price,
-              "slug": vm.store.state.quoteData.data[crypto].slug,
-              "market_cap": vm.store.state.quoteData.data[crypto].quote.USD.market_cap,
-              "market_cap_perc": vm.store.state.quoteData.data[crypto].quote.USD.market_cap / vm.store.state.metaData.data.quote.USD.total_market_cap * 100
-            }
-            vm.store.commit("addTransfData", newData)
-          }
-          let otherData = {
-            "id": 0,
-            "name": "Other",
-            "symbol": "Other",
-            "price": NaN,
-            "slug": "other",
-            "market_cap": vm.store.state.metaData.data.quote.USD.total_market_cap - vm.store.state.marketCapShown,
-            "market_cap_perc": (vm.store.state.metaData.data.quote.USD.total_market_cap - vm.store.state.marketCapShown) / vm.store.state.metaData.data.quote.USD.total_market_cap * 100
-          }
-          vm.store.commit("addTransfData", otherData)
-          resolve("data transformed")
-        })
-      }
-
       function generateTree() {
         return new Promise((resolve) => {
           const w = window.innerWidth;
           const h = window.innerHeight - 50;
+          var colorScale = d3.scaleLinear()
+            .domain([-10, 10])
+            .range(['#77262dff', '#7BAE7F']);
 
-          const hierarchy = d3.hierarchy(vm.store.state.transfData)
+          const hierarchy = d3.hierarchy(vm.store.state.quoteData)
             .sum(d => d.market_cap)
             .sort((a, b) => b.market_cap - a.market_cap);
 
@@ -152,6 +115,7 @@ export default {
             .attr("width",  d=>d.x1 - d.x0)
             .attr("height", d=>d.y1 - d.y0)
             .attr("fill", "#53b3cbff")
+            .attr("fill", function(d) { return colorScale(d.data.percent_change_1h)})
             .on("mouseover", function(d) {
               d3.select(this)
                 .transition()
