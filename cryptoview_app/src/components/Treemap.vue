@@ -67,7 +67,7 @@ export default {
       viz();
       
       async function quotesApi() {
-        const apiUrl = "https://cryptoview.azurewebsites.net/quotes";
+        const apiUrl = "https://cryptoview-beta.azurewebsites.net/quotes/";
         
         try {
           let response = await axios(`${ apiUrl }`);
