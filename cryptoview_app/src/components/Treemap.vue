@@ -11,12 +11,12 @@
 </template>
 
 <script>
-// import * as d3 from "d3";
+import * as d3 from "d3";
 import { useStore } from "vuex";
-// import axios from "axios"
+import axios from "axios"
 
 // TODO: remove when API is implemented
-// import datajson from "../assets/data.json";
+import datajson from "../assets/data.json";
 
 export default {
   name: "Treemap",
@@ -28,181 +28,181 @@ export default {
     loading: false
   }),
   mounted() {
-    // this.treemap();
+    this.treemap();
   },
   beforeUnmount() {
-    // this.unmountTreemap();
+    this.unmountTreemap();
   },
 
   methods: {
-    // treemap() {
-    //   var vm = this;
-    //   vm.loading = true;
+    treemap() {
+      var vm = this;
+      vm.loading = true;
 
-    //   // create number formatter
-    //   const formatter = new Intl.NumberFormat("en-US", {
-    //     style: "currency",
-    //     currency: "USD",
-    //     maximumFractionDigits: 0
-    //   });
+      // create number formatter
+      const formatter = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0
+      });
 
-    //   const formatter_dec = new Intl.NumberFormat("en-US", {
-    //     style: "currency",
-    //     currency: "USD",
-    //     maximumFractionDigits: 2
-    //   });
+      const formatter_dec = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 2
+      });
 
-    //   async function viz() {
-    //     try {
-    //       vm.store.commit("resetQuoteData");
+      async function viz() {
+        try {
+          vm.store.commit("resetQuoteData");
 
-    //       await quotesApi();
-    //       await generateTree();
+          await quotesApi();
+          await generateTree();
 
-    //     } catch (error) {
-    //       console.log(error);
-    //     }
-    //     vm.loading = false;
-    //   }
-    //   viz();
+        } catch (error) {
+          console.log(error);
+        }
+        vm.loading = false;
+      }
+      viz();
       
-    //   async function quotesApi() {
-    //     const apiUrl = "http://localhost:3000/quotes";
+      async function quotesApi() {
+        const apiUrl = "http://localhost:3000/quotes";
         
-    //     try {
-    //       let response = await axios(`${ apiUrl }`);
+        try {
+          let response = await axios(`${ apiUrl }`);
 
-    //       for (var crypto = 0; crypto < response.data.quotes[0].length; crypto++) {
-    //         vm.store.commit("setQuoteData", response.data.quotes[0][crypto]);
-    //       }
-    //       vm.store.commit("setMetaData", response.data.meta);
+          for (var crypto = 0; crypto < response.data.quotes[0].length; crypto++) {
+            vm.store.commit("setQuoteData", response.data.quotes[0][crypto]);
+          }
+          vm.store.commit("setMetaData", response.data.meta);
 
-    //       return response
-    //     } catch (error) {
-    //       vm.store.commit("setQuoteData", datajson);
-    //       console.log(error);
-    //     }
-    //   }
+          return response
+        } catch (error) {
+          vm.store.commit("setQuoteData", datajson);
+          console.log(error);
+        }
+      }
 
-    //   function generateTree() {
-    //     return new Promise((resolve) => {
-    //       const w = window.innerWidth;
-    //       const h = window.innerHeight - 50;
-    //       var colorScale = d3.scaleLinear()
-    //         .domain([-10, 10])
-    //         .range(['#77262dff', '#7BAE7F']);
+      function generateTree() {
+        return new Promise((resolve) => {
+          const w = window.innerWidth;
+          const h = window.innerHeight - 50;
+          var colorScale = d3.scaleLinear()
+            .domain([-10, 10])
+            .range(['#77262dff', '#7BAE7F']);
 
-    //       const hierarchy = d3.hierarchy(vm.store.state.quoteData)
-    //         .sum(d => d.market_cap)
-    //         .sort((a, b) => b.market_cap - a.market_cap);
+          const hierarchy = d3.hierarchy(vm.store.state.quoteData)
+            .sum(d => d.market_cap)
+            .sort((a, b) => b.market_cap - a.market_cap);
 
-    //       const treemap = d3.treemap()
-    //         .size([w, h])
-    //         .padding(1)
+          const treemap = d3.treemap()
+            .size([w, h])
+            .padding(1)
 
-    //       const root = treemap(hierarchy);
+          const root = treemap(hierarchy);
 
-    //       const svg = d3.select("#treemap")
-    //         .append("svg")
-    //         .attr("viewBox", [0, 0, w, h])
+          const svg = d3.select("#treemap")
+            .append("svg")
+            .attr("viewBox", [0, 0, w, h])
 
-    //       svg.selectAll("rect")
-    //         .data(root.leaves())
-    //         .enter()
-    //         .append("rect")
-    //         .attr("x", d=>d.x0)   
-    //         .attr("y", d=>d.y0)
-    //         .attr("width",  d=>d.x1 - d.x0)
-    //         .attr("height", d=>d.y1 - d.y0)
-    //         .attr("fill", "#53b3cbff")
-    //         .attr("fill", function(d) { return colorScale(d.data.percent_change_1h)})
-    //         .on("mouseover", function(d) {
-    //           d3.select(this)
-    //             .transition()
-    //             .duration(200)
-    //             .attr("opacity", 0.6);
-    //           d3.select("#tooltip")
-    //             .transition()
-    //             .duration(200)
-    //             .style("opacity", 1)
-    //           d3.select("#tooltip")
-    //             .html(`
-    //               <table>
-    //                 <tr>
-    //                   <th>
-    //                     ${d.target.__data__.data.name}</br>
-    //                   </th>
-    //                 </tr>
-    //                 <tr>
-    //                   <td>
-    //                     Quote:
-    //                   </td>
-    //                   <td>
-    //                     ${formatter_dec.format(d.target.__data__.data.price)}
-    //                   </td>
-    //                 </tr>
-    //                 <tr>
-    //                   <td>
-    //                     Market Cap:
-    //                   </td>
-    //                   <td>
-    //                     ${formatter.format(d.target.__data__.data.market_cap)}
-    //                   </td>
-    //                 </tr>
-    //                 <tr>
-    //                   <td>
-    //                     Market Cap:
-    //                   </td>
-    //                   <td>
-    //                     ${d.target.__data__.data.market_cap_perc.toFixed(2)}%
-    //                   </td>
-    //                 </tr>
-    //               </table>`
-    //             )
-    //         }).on("mouseout", function() {
-    //             d3.select(this)
-    //               .transition()
-    //               .duration(200)
-    //               .attr("opacity", 1);
-    //             d3.select("#tooltip")
-    //               .style("opacity", 0)
-    //         }).on("mousemove", function() {
-    //           d3.select("#tooltip")
-    //             .style("left", (event.x + 10) + "px")
-    //             .style("top", (event.y + 10) + "px")
-    //         })
+          svg.selectAll("rect")
+            .data(root.leaves())
+            .enter()
+            .append("rect")
+            .attr("x", d=>d.x0)   
+            .attr("y", d=>d.y0)
+            .attr("width",  d=>d.x1 - d.x0)
+            .attr("height", d=>d.y1 - d.y0)
+            .attr("fill", "#53b3cbff")
+            .attr("fill", function(d) { return colorScale(d.data.percent_change_1h)})
+            .on("mouseover", function(d) {
+              d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("opacity", 0.6);
+              d3.select("#tooltip")
+                .transition()
+                .duration(200)
+                .style("opacity", 1)
+              d3.select("#tooltip")
+                .html(`
+                  <table>
+                    <tr>
+                      <th>
+                        ${d.target.__data__.data.name}</br>
+                      </th>
+                    </tr>
+                    <tr>
+                      <td>
+                        Quote:
+                      </td>
+                      <td>
+                        ${formatter_dec.format(d.target.__data__.data.price)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        Market Cap:
+                      </td>
+                      <td>
+                        ${formatter.format(d.target.__data__.data.market_cap)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        Market Cap:
+                      </td>
+                      <td>
+                        ${d.target.__data__.data.market_cap_perc.toFixed(2)}%
+                      </td>
+                    </tr>
+                  </table>`
+                )
+            }).on("mouseout", function() {
+                d3.select(this)
+                  .transition()
+                  .duration(200)
+                  .attr("opacity", 1);
+                d3.select("#tooltip")
+                  .style("opacity", 0)
+            }).on("mousemove", function() {
+              d3.select("#tooltip")
+                .style("left", (event.x + 10) + "px")
+                .style("top", (event.y + 10) + "px")
+            })
 
-    //       svg.selectAll("text")
-    //         .data(root.leaves())
-    //         .enter()
-    //         .append("text")
-    //         .selectAll("tspan")
-    //         .data(d => {
-    //           return d.data.symbol.split(/(?=[A-Z][^A-Z])/g) // split the symbol
-    //             .map(v => {
-    //               return {
-    //                 text: v,
-    //                 x0: d.x0,                        // keep x0 reference
-    //                 y0: d.y0                         // keep y0 reference
-    //               }
-    //             });
-    //         })
-    //         .enter()
-    //         .append("tspan")
-    //         .attr("x", (d) => d.x0 + 5)
-    //         .attr("y", (d, i) => d.y0 + 15 + (i * 10))       // offset by index 
-    //         .text((d) => d.text)
-    //         .attr("font-size", "0.9em")
-    //         .attr("fill", "white");
-    //       resolve("tree map build")
-    //     })
-    //   }
-    // },
+          svg.selectAll("text")
+            .data(root.leaves())
+            .enter()
+            .append("text")
+            .selectAll("tspan")
+            .data(d => {
+              return d.data.symbol.split(/(?=[A-Z][^A-Z])/g) // split the symbol
+                .map(v => {
+                  return {
+                    text: v,
+                    x0: d.x0,                        // keep x0 reference
+                    y0: d.y0                         // keep y0 reference
+                  }
+                });
+            })
+            .enter()
+            .append("tspan")
+            .attr("x", (d) => d.x0 + 5)
+            .attr("y", (d, i) => d.y0 + 15 + (i * 10))       // offset by index 
+            .text((d) => d.text)
+            .attr("font-size", "0.9em")
+            .attr("fill", "white");
+          resolve("tree map build")
+        })
+      }
+    },
 
-    // unmountTreemap() {
-    //   const svg = d3.select("#treemap")
-    //   svg.selectAll('*').remove();
-    // }
+    unmountTreemap() {
+      const svg = d3.select("#treemap")
+      svg.selectAll('*').remove();
+    }
   }
 }
 </script>
