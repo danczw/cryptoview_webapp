@@ -89,11 +89,12 @@ app.get('/quotes/', (request, response) => {
                 "slug": "other",
                 "market_cap": metaData.quote.USD.total_market_cap - displayedMarketCap,
                 "market_cap_perc": (metaData.quote.USD.total_market_cap - displayedMarketCap) / metaData.quote.USD.total_market_cap * 100,
+                
                 // TODO: check API documentation
-                "volume_24h": 0,
-                "percent_change_1h": 0,
-                "percent_change_24h": 0,
-                "percent_change_7d": 0
+                "volume_24h": NaN,
+                "percent_change_1h": NaN,
+                "percent_change_24h": NaN,
+                "percent_change_7d": NaN
             }
             transfQuoteData.push(otherCrypto);
 

@@ -16,6 +16,9 @@
 
 #nav {
   padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #nav a {

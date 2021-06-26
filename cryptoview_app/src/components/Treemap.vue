@@ -1,5 +1,10 @@
 <template>
   <div id="body">
+    <div class="time_wrapper">
+      <button class="time_button" :class="{'time_active': localTimeFrame === 'change_1h'}" v-on:click="setTimeFrame('change_1h'); updateTreemap();">1h</button> /
+      <button class="time_button" :class="{'time_active': localTimeFrame === 'change_24h'}" v-on:click="setTimeFrame('change_24h'); updateTreemap();">24h</button> /
+      <button class="time_button" :class="{'time_active': localTimeFrame === 'change_7d'}" v-on:click="setTimeFrame('change_7d'); updateTreemap();">7d</button>
+    </div>
     <div class="lds-wrapper">
       <div class="lds-hourglass" v-if="loading"></div>
     </div>
@@ -12,7 +17,7 @@
 
 <script>
 import * as d3 from "d3";
-import { useStore } from "vuex";
+import { mapGetters, useStore } from "vuex";
 import axios from "axios"
 
 // TODO: remove when API is implemented
@@ -20,25 +25,41 @@ import datajson from "../assets/data.json";
 
 export default {
   name: "Treemap",
+  
   setup() {
     const store = useStore();
     return { store }
   },
+
   data: () => ({
     loading: false
   }),
-  mounted() {
-    this.treemap();
+
+  computed: {
+    ...mapGetters({
+      localTimeFrame: 'getTimeFrame',
+      localQuoteData: 'getQuoteData'
+    })
   },
+
+  // TODO: keep tree active
+  mounted() {
+    this.generateTreemap();
+  },
+
   beforeUnmount() {
     this.unmountTreemap();
   },
 
   methods: {
-    treemap() {
-      var vm = this;
+    generateTreemap() {
+      const svg = d3.select("#treemap")
+      svg.selectAll('*').remove();
+      
+      const vm = this;
       vm.loading = true;
 
+      // TODO: move to mixin
       // create number formatter
       const formatter = new Intl.NumberFormat("en-US", {
         style: "currency",
@@ -46,25 +67,12 @@ export default {
         maximumFractionDigits: 0
       });
 
+      // TODO: move to mixin
       const formatter_dec = new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
         maximumFractionDigits: 2
       });
-
-      async function viz() {
-        try {
-          vm.store.commit("resetQuoteData");
-
-          await quotesApi();
-          await generateTree();
-
-        } catch (error) {
-          console.log(error);
-        }
-        vm.loading = false;
-      }
-      viz();
       
       async function quotesApi() {
         const apiUrl = "https://cryptoview-beta.azurewebsites.net/quotes/";
@@ -72,7 +80,7 @@ export default {
         try {
           let response = await axios(`${ apiUrl }`);
 
-          for (var crypto = 0; crypto < response.data.quotes[0].length; crypto++) {
+          for (let crypto = 0; crypto < response.data.quotes[0].length; crypto++) {
             vm.store.commit("setQuoteData", response.data.quotes[0][crypto]);
           }
           vm.store.commit("setMetaData", response.data.meta);
@@ -88,11 +96,13 @@ export default {
         return new Promise((resolve) => {
           const w = window.innerWidth;
           const h = window.innerHeight - 50;
-          var colorScale = d3.scaleLinear()
-            .domain([-10, 10])
-            .range(['#77262dff', '#7BAE7F']);
 
-          const hierarchy = d3.hierarchy(vm.store.state.quoteData)
+          // TODO: move to mixin
+          const colorScale = d3.scaleSequential()
+            .domain([-15, 15])
+            .range(['#77262dff', '#63ff00']);
+
+          const hierarchy = d3.hierarchy(vm.localQuoteData)
             .sum(d => d.market_cap)
             .sort((a, b) => b.market_cap - a.market_cap);
 
@@ -115,7 +125,6 @@ export default {
             .attr("width",  d=>d.x1 - d.x0)
             .attr("height", d=>d.y1 - d.y0)
             .attr("fill", "#53b3cbff")
-            .attr("fill", function(d) { return colorScale(d.data.percent_change_1h)})
             .on("mouseover", function(d) {
               d3.select(this)
                 .transition()
@@ -172,37 +181,262 @@ export default {
                 .style("top", (event.y + 10) + "px")
             })
 
+          svg.selectAll("rect")
+            .attr("fill", function(d) {
+              switch(vm.localTimeFrame) {
+                case "change_1h":
+                  return colorScale(d.data.percent_change_1h);
+                case "change_24h":
+                  return colorScale(d.data.percent_change_24h);
+                case "change_7d":
+                  return colorScale(d.data.percent_change_7d);
+                default:
+                  return "#53b3cbff";
+              }
+            })
+
           svg.selectAll("text")
             .data(root.leaves())
             .enter()
             .append("text")
             .selectAll("tspan")
             .data(d => {
-              return d.data.symbol.split(/(?=[A-Z][^A-Z])/g) // split the symbol
+              return d.data.symbol.split(/(?=[A-Z][^A-Z])/g)
                 .map(v => {
                   return {
-                    text: v,
-                    x0: d.x0,                        // keep x0 reference
-                    y0: d.y0                         // keep y0 reference
+                    symbol: v,
+                    x0: d.x0,
+                    y0: d.y0,
+                    percent_change_1h: d.data.percent_change_1h,
+                    percent_change_24h: d.data.percent_change_24h,
+                    percent_change_7d: d.data.percent_change_7d
                   }
                 });
             })
             .enter()
             .append("tspan")
             .attr("x", (d) => d.x0 + 5)
-            .attr("y", (d, i) => d.y0 + 15 + (i * 10))       // offset by index 
-            .text((d) => d.text)
+            .attr("y", (d, i) => d.y0 + 15 + (i * 10))
+            .text((d) => {
+                switch(vm.localTimeFrame) {
+                  case "change_1h":
+                    return `${d.symbol} ${d.percent_change_1h.toFixed(2)}%`;
+                  case "change_24h":
+                    return `${d.symbol} ${d.percent_change_24h.toFixed(2)}%`;
+                  case "change_7d":
+                    return `${d.symbol} ${d.percent_change_7d.toFixed(2)}%`;
+                  default:
+                    return `${d.symbol}`;
+                }
+              })
             .attr("font-size", "0.9em")
             .attr("fill", "white");
-          resolve("tree map build")
+
+          resolve("tree map build");
         })
       }
+
+      async function viz() {
+        try {
+          vm.store.commit("resetQuoteData");
+
+          await quotesApi();
+          await generateTree();
+
+        } catch (error) {
+          console.log(error);
+        }
+        vm.loading = false;
+      }
+      viz();
+    },
+
+    updateTreemap() {
+      const svg = d3.select("#treemap")
+      svg.selectAll('*').remove();
+      
+      const vm = this;
+      vm.loading = true;
+      
+      // TODO: move to mixin
+      // create number formatter
+      const formatter = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0
+      });
+
+      // TODO: move to mixin
+      const formatter_dec = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 2
+      });
+
+      function generateTree() {
+        return new Promise((resolve) => {
+          const w = window.innerWidth;
+          const h = window.innerHeight - 50;
+
+          // TODO: move to mixin
+          const colorScale = d3.scaleSequential()
+            .domain([-15, 15])
+            .range(['#77262dff', '#63ff00']);
+
+          const hierarchy = d3.hierarchy(vm.localQuoteData)
+            .sum(d => d.market_cap)
+            .sort((a, b) => b.market_cap - a.market_cap);
+
+          const treemap = d3.treemap()
+            .size([w, h])
+            .padding(1)
+
+          const root = treemap(hierarchy);
+
+          const svg = d3.select("#treemap")
+            .append("svg")
+            .attr("viewBox", [0, 0, w, h])
+
+          svg.selectAll("rect")
+            .data(root.leaves())
+            .enter()
+            .append("rect")
+            .attr("x", d=>d.x0)   
+            .attr("y", d=>d.y0)
+            .attr("width",  d=>d.x1 - d.x0)
+            .attr("height", d=>d.y1 - d.y0)
+            .attr("fill", "#53b3cbff")
+            .on("mouseover", function(d) {
+              d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("opacity", 0.6);
+              d3.select("#tooltip")
+                .transition()
+                .duration(200)
+                .style("opacity", 1)
+              d3.select("#tooltip")
+                .html(`
+                  <table>
+                    <tr>
+                      <th>
+                        ${d.target.__data__.data.name}</br>
+                      </th>
+                    </tr>
+                    <tr>
+                      <td>
+                        Quote:
+                      </td>
+                      <td>
+                        ${formatter_dec.format(d.target.__data__.data.price)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        Market Cap:
+                      </td>
+                      <td>
+                        ${formatter.format(d.target.__data__.data.market_cap)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        Market Cap:
+                      </td>
+                      <td>
+                        ${d.target.__data__.data.market_cap_perc.toFixed(2)}%
+                      </td>
+                    </tr>
+                  </table>`
+                )
+            }).on("mouseout", function() {
+                d3.select(this)
+                  .transition()
+                  .duration(200)
+                  .attr("opacity", 1);
+                d3.select("#tooltip")
+                  .style("opacity", 0)
+            }).on("mousemove", function() {
+              d3.select("#tooltip")
+                .style("left", (event.x + 10) + "px")
+                .style("top", (event.y + 10) + "px")
+            })
+
+          svg.selectAll("rect")
+            .attr("fill", function(d) {
+              switch(vm.localTimeFrame) {
+                case "change_1h":
+                  return colorScale(d.data.percent_change_1h);
+                case "change_24h":
+                  return colorScale(d.data.percent_change_24h);
+                case "change_7d":
+                  return colorScale(d.data.percent_change_7d);
+                default:
+                  return "#53b3cbff";
+              }
+            })
+
+          svg.selectAll("text")
+            .data(root.leaves())
+            .enter()
+            .append("text")
+            .selectAll("tspan")
+            .data(d => {
+              return d.data.symbol.split(/(?=[A-Z][^A-Z])/g)
+                .map(v => {
+                  return {
+                    symbol: v,
+                    x0: d.x0,
+                    y0: d.y0,
+                    percent_change_1h: d.data.percent_change_1h,
+                    percent_change_24h: d.data.percent_change_24h,
+                    percent_change_7d: d.data.percent_change_7d
+                  }
+                });
+            })
+            .enter()
+            .append("tspan")
+            .attr("x", (d) => d.x0 + 5)
+            .attr("y", (d, i) => d.y0 + 15 + (i * 10))
+            .text((d) => {
+                switch(vm.localTimeFrame) {
+                  case "change_1h":
+                    return `${d.symbol} ${d.percent_change_1h.toFixed(2)}%`;
+                  case "change_24h":
+                    return `${d.symbol} ${d.percent_change_24h.toFixed(2)}%`;
+                  case "change_7d":
+                    return `${d.symbol} ${d.percent_change_7d.toFixed(2)}%`;
+                  default:
+                    return `${d.symbol}`;
+                }
+              })
+            .attr("font-size", "0.9em")
+            .attr("fill", "white");
+
+          resolve("tree map build");
+        })
+      }
+
+      async function viz() {
+        try {
+          await generateTree();
+        } catch (error) {
+          console.log(error);
+        }
+        vm.loading = false;
+      }
+      viz();
     },
 
     unmountTreemap() {
       const svg = d3.select("#treemap")
       svg.selectAll('*').remove();
-    }
+    },
+
+    setTimeFrame(_value) {
+      this.store.commit("setTimeFrame", _value);
+      this.localTimeFrame = _value;
+    },
   }
 }
 </script>
@@ -222,6 +456,30 @@ export default {
   border-radius: 2px;
   pointer-events: none;
   font-size: 0.9rem;
+}
+
+.time_wrapper {
+  width: 120px;
+  top: 0;
+  right: 0;
+  position: absolute;
+  color: $black-shadows;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .time_button {
+    background-color: transparent;
+    color: $black-shadows;
+    font-size: 14px;
+    border: none;
+    border-radius: 2px;
+  }
+
+  .time_active {
+    border-bottom: 1px solid $black-shadows;
+  }
 }
 
 .lds-wrapper {

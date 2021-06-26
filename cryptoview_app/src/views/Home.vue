@@ -10,8 +10,14 @@ import Treemap from '@/components/Treemap.vue'
 
 export default {
   name: 'Home',
+
   components: {
     Treemap
   }
 }
 </script>
+
+<style scoped lang="scss">
+@import "./src/styles/variables.scss";
+
+</style>
