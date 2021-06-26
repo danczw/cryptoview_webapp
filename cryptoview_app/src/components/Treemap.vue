@@ -108,13 +108,13 @@ export default {
 
           const treemap = d3.treemap()
             .size([w, h])
-            .padding(1)
+            .padding(1);
 
           const root = treemap(hierarchy);
 
           const svg = d3.select("#treemap")
             .append("svg")
-            .attr("viewBox", [0, 0, w, h])
+            .attr("viewBox", [0, 0, w, h]);
 
           svg.selectAll("rect")
             .data(root.leaves())
@@ -177,23 +177,39 @@ export default {
                   .style("opacity", 0)
             }).on("mousemove", function() {
               d3.select("#tooltip")
-                .style("left", (event.x + 10) + "px")
-                .style("top", (event.y + 10) + "px")
-            })
+                .style("left", function() {
+                  if(event.x < w/1.2) {
+                    return (event.x + 10) + "px"
+                  } else {
+                    return (event.x - 220) + "px"
+                  }
+                })
+                .style("top", function() {
+                  if(event.y < h/1.1) {
+                    return (event.y + 10) + "px"
+                  } else {
+                    return (event.y - 100) + "px"
+                  }
+                })
+            });
 
           svg.selectAll("rect")
             .attr("fill", function(d) {
-              switch(vm.localTimeFrame) {
-                case "change_1h":
-                  return colorScale(d.data.percent_change_1h);
-                case "change_24h":
-                  return colorScale(d.data.percent_change_24h);
-                case "change_7d":
-                  return colorScale(d.data.percent_change_7d);
-                default:
-                  return "#53b3cbff";
+              if(d.data.name === "Other") {
+                return "#ab9c9eff"
+              } else {
+                switch(vm.localTimeFrame) {
+                  case "change_1h":
+                    return colorScale(d.data.percent_change_1h);
+                  case "change_24h":
+                    return colorScale(d.data.percent_change_24h);
+                  case "change_7d":
+                    return colorScale(d.data.percent_change_7d);
+                  default:
+                    return "#53b3cbff";
+                }
               }
-            })
+            });
 
           svg.selectAll("text")
             .data(root.leaves())
@@ -217,18 +233,29 @@ export default {
             .append("tspan")
             .attr("x", (d) => d.x0 + 5)
             .attr("y", (d, i) => d.y0 + 15 + (i * 10))
+            .text((d) => { return d.symbol})
+            .attr("font-size", "0.9em")
+            .attr("fill", "white")
+            
+            .append("tspan")
+            .attr("x", (d) => d.x0 + 5)
+            .attr("y", (d, i) => d.y0 + 35 + (i * 10))
             .text((d) => {
+              if(d.symbol === "Other") {
+                return ""
+              } else {
                 switch(vm.localTimeFrame) {
                   case "change_1h":
-                    return `${d.symbol} ${d.percent_change_1h.toFixed(2)}%`;
+                    return `${d.percent_change_1h.toFixed(2)}%`;
                   case "change_24h":
-                    return `${d.symbol} ${d.percent_change_24h.toFixed(2)}%`;
+                    return `${d.percent_change_24h.toFixed(2)}%`;
                   case "change_7d":
-                    return `${d.symbol} ${d.percent_change_7d.toFixed(2)}%`;
+                    return `${d.percent_change_7d.toFixed(2)}%`;
                   default:
                     return `${d.symbol}`;
                 }
-              })
+              }  
+            })
             .attr("font-size", "0.9em")
             .attr("fill", "white");
 
@@ -252,7 +279,7 @@ export default {
     },
 
     updateTreemap() {
-      const svg = d3.select("#treemap")
+      const svg = d3.select("#treemap");
       svg.selectAll('*').remove();
       
       const vm = this;
@@ -289,13 +316,13 @@ export default {
 
           const treemap = d3.treemap()
             .size([w, h])
-            .padding(1)
+            .padding(1);
 
           const root = treemap(hierarchy);
 
           const svg = d3.select("#treemap")
             .append("svg")
-            .attr("viewBox", [0, 0, w, h])
+            .attr("viewBox", [0, 0, w, h]);
 
           svg.selectAll("rect")
             .data(root.leaves())
@@ -358,23 +385,39 @@ export default {
                   .style("opacity", 0)
             }).on("mousemove", function() {
               d3.select("#tooltip")
-                .style("left", (event.x + 10) + "px")
-                .style("top", (event.y + 10) + "px")
-            })
+                .style("left", function() {
+                  if(event.x < w/1.2) {
+                    return (event.x + 10) + "px"
+                  } else {
+                    return (event.x - 220) + "px"
+                  }
+                })
+                .style("top", function() {
+                  if(event.y < h/1.1) {
+                    return (event.y + 10) + "px"
+                  } else {
+                    return (event.y - 100) + "px"
+                  }
+                })
+            });
 
           svg.selectAll("rect")
             .attr("fill", function(d) {
-              switch(vm.localTimeFrame) {
-                case "change_1h":
-                  return colorScale(d.data.percent_change_1h);
-                case "change_24h":
-                  return colorScale(d.data.percent_change_24h);
-                case "change_7d":
-                  return colorScale(d.data.percent_change_7d);
-                default:
-                  return "#53b3cbff";
+              if(d.data.name === "Other") {
+                return "#ab9c9eff"
+              } else {
+                switch(vm.localTimeFrame) {
+                  case "change_1h":
+                    return colorScale(d.data.percent_change_1h);
+                  case "change_24h":
+                    return colorScale(d.data.percent_change_24h);
+                  case "change_7d":
+                    return colorScale(d.data.percent_change_7d);
+                  default:
+                    return "#53b3cbff";
+                }
               }
-            })
+            });
 
           svg.selectAll("text")
             .data(root.leaves())
@@ -398,18 +441,29 @@ export default {
             .append("tspan")
             .attr("x", (d) => d.x0 + 5)
             .attr("y", (d, i) => d.y0 + 15 + (i * 10))
+            .text((d) => { return d.symbol})
+            .attr("font-size", "0.9em")
+            .attr("fill", "white")
+            
+            .append("tspan")
+            .attr("x", (d) => d.x0 + 5)
+            .attr("y", (d, i) => d.y0 + 35 + (i * 10))
             .text((d) => {
+              if(d.symbol === "Other") {
+                return ""
+              } else {
                 switch(vm.localTimeFrame) {
                   case "change_1h":
-                    return `${d.symbol} ${d.percent_change_1h.toFixed(2)}%`;
+                    return `${d.percent_change_1h.toFixed(2)}%`;
                   case "change_24h":
-                    return `${d.symbol} ${d.percent_change_24h.toFixed(2)}%`;
+                    return `${d.percent_change_24h.toFixed(2)}%`;
                   case "change_7d":
-                    return `${d.symbol} ${d.percent_change_7d.toFixed(2)}%`;
+                    return `${d.percent_change_7d.toFixed(2)}%`;
                   default:
                     return `${d.symbol}`;
                 }
-              })
+              }  
+            })
             .attr("font-size", "0.9em")
             .attr("fill", "white");
 
@@ -451,7 +505,8 @@ export default {
   padding: .5rem;
   background: #FFFFFF;
   color: $rich-black-fogra-29;
-  border: 1px solid $yale-blue;
+  background-color: white;
+  border: 2px solid $yale-blue;
   opacity: 0;
   border-radius: 2px;
   pointer-events: none;
