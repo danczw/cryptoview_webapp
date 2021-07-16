@@ -1,4 +1,4 @@
-# crypto_view_app
+# CryptoView App
 
 ## Project setup
 ```
