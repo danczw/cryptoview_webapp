@@ -265,14 +265,14 @@ export default {
 
       async function viz() {
         try {
+          
+          // TODO: refactor adding: if quotes === empty => quotesApi
           vm.store.commit("resetQuoteData");
-
           await quotesApi();
           await generateTree();
 
-        } catch (error) {
-          console.log(error);
-        }
+        } catch (error) { console.log(error); }
+
         vm.loading = false;
       }
       viz();
